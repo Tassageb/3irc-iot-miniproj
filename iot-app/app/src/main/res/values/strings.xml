@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">iot-miniproj</string>
+    <string name="title_activity_main">Main</string>
+    <string name="title_activity_update_display_mode">UpdateDisplayModeActivity</string>
+</resources>
