@@ -3,29 +3,34 @@
 MicroBit uBit;
 const int CIPHER_KEY = 23;
 
+// Structure du paquet
 struct SensorPacket {
     int receiver;
     char* message;
 };
 
-// A^B^B=A : Money, Money, Money
+// Chiffrement par XOR
+// Fonctionnement : A^B^B=A : Money, Money, Money
 void xor_cipher(char* message, int key) {
     for (int i = 0; message[i] != '\0'; ++i) {
         message[i] ^= key;
     }
 }
 
+// Sérialisation du paquet et chiffrement
 void serialize_sensor_packet(char* buffer, SensorPacket p) {
     snprintf(buffer, 64, "%d:%s", p.receiver, p.message);
     xor_cipher(buffer, CIPHER_KEY);
 }
 
+// Envoie du message chiffré
 void send_message(SensorPacket p) {
     char buffer[64];
     serialize_sensor_packet(buffer, p);
     uBit.radio.datagram.send((uint8_t*) buffer, strlen(buffer));
 }
 
+// Désérialisation du paquet et déchiffrement
 int deserialize_sensor_packet(SensorPacket *p, ManagedString packet) {
     int sa;
     char buffer[64];
@@ -36,6 +41,7 @@ int deserialize_sensor_packet(SensorPacket *p, ManagedString packet) {
     return sa == 2 ? 0 : -1;
 }
 
+// Handler message radio
 void on_data(MicroBitEvent) {
     char message[64];
     SensorPacket p = { -1, message };
@@ -61,6 +67,7 @@ int main() {
     uBit.radio.enable();
     uBit.radio.setGroup(35);
 
+    // Passage des commandes directement
     while(1) {
         ManagedString command = uBit.serial.readUntil('!');
         if (command.length() > 0) {
