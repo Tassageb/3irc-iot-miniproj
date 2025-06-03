@@ -3,6 +3,7 @@
 #include "bme280.h"
 #include "ssd1306.h"
 
+// Paquet du capteur
 struct SensorPacket {
     int receiver;
     char* message;
@@ -16,10 +17,12 @@ ssd1306 screen(&uBit, &i2c, &P0);
 tsl256x tsl(&uBit,&i2c);
 bme280 bme(&uBit,&i2c);
 
+// Mode des capteurs, par défaut TLH
 char sensorMode[6] = "TLH";
 
 const int CIPHER_KEY = 23;
 
+// Modulo positif
 int mod(int num, int mod) {
     int nummod = num % mod;
     if (nummod < 0) {
@@ -28,24 +31,28 @@ int mod(int num, int mod) {
     return nummod;
 }
 
-// A^B^B=A : Money, Money, Money
+// Chiffrement par XOR
+// Fonctionnement : A^B^B=A : Money, Money, Money
 void xor_cipher(char* message, int key) {
     for (int i = 0; message[i] != '\0'; ++i) {
         message[i] ^= key;
     }
 }
 
+// Sérialisation du paquet et chiffrement
 void serialize_sensor_packet(char* buffer, SensorPacket p) {
     snprintf(buffer, 64, "%d:%s", p.receiver, p.message);
     xor_cipher(buffer, CIPHER_KEY);
 }
 
+// Envoie du message
 void send_message(SensorPacket p) {
     char buffer[64];
     serialize_sensor_packet(buffer, p);
     uBit.radio.datagram.send((uint8_t*) buffer, strlen(buffer));
 }
 
+// Désérialisation du paquet et déchiffrement
 int deserialize_sensor_packet(SensorPacket *p, ManagedString packet) {
     int sa;
     char buffer[64];
@@ -56,6 +63,7 @@ int deserialize_sensor_packet(SensorPacket *p, ManagedString packet) {
     return sa == 2 ? 0 : -1;
 }
 
+// Handler message radio
 void on_data(MicroBitEvent) {
     char message[64];
     SensorPacket p = { -1, message };
@@ -77,6 +85,7 @@ void on_data(MicroBitEvent) {
     strncpy(sensorMode, p.message, 6);
 }
 
+// Récupère la mesure du capteur
 int get_sensor_value(char sensor) {
     if (sensor == 'T') {
         int32_t temp;
@@ -106,6 +115,7 @@ int get_sensor_value(char sensor) {
     return -1;
 }
 
+// Affiche la mesure du capteur sur l'écran à la ligne voulue
 void display_sensor_value(char sensor, int index, int value) {
     char line[17];
 
@@ -145,6 +155,7 @@ int main() {
     uBit.radio.enable();
     uBit.radio.setGroup(35);
 
+    // Envoie toutes les 500ms les données et les affiche sur l'écran
     while(1) {
         char message[64] = "";
         int sensorIndex = 0;
