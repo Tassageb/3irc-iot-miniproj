@@ -1,5 +1,6 @@
 import uart_connection
 import udp_server
+import influx
 
 def onUDPCommand(command, payload):
     #print(command, payload)
@@ -20,6 +21,7 @@ def onUartMessage(msg):
             "values": values
         }
     }
+    influx.insert_uart_data(room_id, mode, values)
     udp_server.send_to_listeners(payload)
 
 if __name__ == "__main__" :

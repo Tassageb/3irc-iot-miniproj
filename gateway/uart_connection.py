@@ -2,7 +2,7 @@ from time import sleep
 import serial
 import threading
 
-SERIALPORT = "/dev/pts/3"
+SERIALPORT = "/dev/ttyACM0"
 BAUDRATE = 115200
 ser = serial.Serial()
 
